@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mia and the Magic Garden · English Quest</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    font-family:'Trebuchet MS','Segoe UI',Tahoma,system-ui,sans-serif;
+    color:#2b2140;
+    min-height:100vh;
+    overflow-x:hidden;
+    padding-bottom:120px;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ---------- ФОН ---------- */
+  #bg{
+    position:fixed;inset:0;z-index:-3;
+    background:linear-gradient(180deg,#a8e0ff 0%,#d6f3ff 45%,#e9fff2 100%);
+    transition:background 1.4s ease;
+  }
+  #stars{position:fixed;inset:0;z-index:-2;opacity:0;transition:opacity 1.4s ease;pointer-events:none}
+  .star{position:absolute;background:#fff;border-radius:50%;box-shadow:0 0 6px #fff;animation:twinkle 3s infinite ease-in-out}
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1.3)}}
+
+  #meadow{position:fixed;bottom:0;left:0;width:100%;height:24vh;z-index:-1;pointer-events:none;opacity:.85;transition:opacity 1.4s ease}
+  #meadow svg{width:100%;height:100%;display:block}
+  #flowers{position:fixed;bottom:0;left:0;width:100%;height:24vh;z-index:-1;pointer-events:none}
+  .flower{position:absolute;bottom:0;opacity:0;transform:translateY(24px) scale(.6);transition:.8s cubic-bezier(.2,.9,.3,1.4);filter:drop-shadow(0 3px 4px rgba(0,0,0,.12))}
+  .flower.show{opacity:1;transform:translateY(0) scale(1)}
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:sticky;top:0;z-index:30;
+    display:flex;align-items:center;gap:14px;
+    padding:12px 18px;
+    background:rgba(255,255,255,.55);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,.8);
+  }
+  .brand{font-weight:800;color:#6a4fa0;font-size:15px;white-space:nowrap}
+  .progress{flex:1;height:12px;background:rgba(255,255,255,.75);border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+  #bar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#8bd3ff,#c39bff,#ffb3d1);transition:width .5s ease}
+  #soundBtn{
+    font-size:18px;width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+    background:#fff;box-shadow:0 4px 12px rgba(110,80,170,.18);
+  }
+
+  /* ---------- КАРТОЧКА ---------- */
+  #stage{display:flex;justify-content:center;padding:26px 16px 60px}
+  .card{
+    width:100%;max-width:880px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-radius:30px;
+    padding:26px 30px 22px;
+    box-shadow:0 24px 60px rgba(80,50,140,.18), 0 0 0 1px rgba(255,255,255,.85) inset;
+    border:2px solid rgba(255,255,255,.95);
+    animation:cardIn .65s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(26px) scale(.975)}to{opacity:1;transform:none}}
+
+  .scene{
+    text-align:center;font-size:54px;line-height:1.2;letter-spacing:4px;margin-bottom:6px;
+    filter:drop-shadow(0 8px 14px rgba(120,80,180,.25));
+    animation:floaty 4.5s ease-in-out infinite;
+  }
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+  .title{font-size:21px;color:#6a4fa0;margin-bottom:16px;text-align:center;font-weight:800;letter-spacing:.3px}
+
+  .story{font-size:20px;line-height:2.9;color:#33264d}
+  @media(max-width:620px){.story{font-size:17px;line-height:2.8}}
+
+  /* ---------- ПРОПУСКИ ---------- */
+  .blank{
+    display:inline-block;position:relative;
+    min-width:78px;padding:3px 10px;margin:6px 3px;
+    border-radius:11px;border:2px dashed #b39ddb;
+    background:#f4eeff;color:#8b6fd0;
+    font-weight:800;text-align:center;cursor:pointer;
+    transition:transform .15s,background .2s,border-color .2s;
+    vertical-align:middle;user-select:none;
+  }
+  .blank:hover{background:#e9dcff;transform:translateY(-2px)}
+  .blank.ok{
+    border:2px solid #46b96a;border-style:solid;
+    background:#e8faee;color:#268a4a;cursor:default;transform:none;
+  }
+  .blank.bad{animation:shake .4s;border-color:#ec7a7a;background:#fff0f0}
+
+  .input-wrap{display:inline-block;position:relative;margin:6px 3px;vertical-align:middle}
+  .blank-input{
+    width:10.5ch;font:inherit;font-weight:800;font-size:19px;
+    color:#6a4fa0;text-align:center;
+    background:#f7f2ff;border:2px dashed #b39ddb;border-radius:11px;
+    padding:3px 6px;outline:none;transition:.2s;
+  }
+  .blank-input:focus{border-color:#8e6fd8;background:#fff;box-shadow:0 0 0 4px rgba(142,111,216,.16)}
+  .blank-input.ok{border:2px solid #46b96a;border-style:solid;background:#e8faee;color:#268a4a}
+  .blank-input.bad{animation:shake .4s;border-color:#ec7a7a;background:#fff0f0}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)}
+    60%{transform:translateX(-5px)}
+    80%{transform:translateX(5px)}
+  }
+
+  /* ---------- ПОПОВЕР (всегда поверх всего) ---------- */
+  .pop{
+    position:fixed;left:0;top:0;
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+    padding:9px;background:#fff;border-radius:16px;
+    box-shadow:0 16px 40px rgba(70,40,130,.35), 0 0 0 1px rgba(180,150,240,.25);
+    z-index:99999;
+    max-width:92vw;
+    transform:translateX(-50%);
+    animation:popIn .18s ease;
+    transform-origin:top center;
+  }
+  @keyframes popIn{
+    from{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.92)}
+    to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+  }
+  .pop button{
+    font:inherit;font-weight:800;font-size:17px;
+    padding:9px 15px;border-radius:12px;border:none;cursor:pointer;
+    background:#f1eaff;color:#5b3fa0;transition:.15s;
+  }
+  .pop button:hover{background:#e0d2ff;transform:translateY(-2px)}
+  .pop button.wrong{background:#ffe0e0;color:#c0392b;animation:shake .4s}
+
+  /* ---------- НИЗ КАРТОЧКИ ---------- */
+  .card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+  .primary{
+    font:inherit;font-weight:900;font-size:17px;
+    padding:13px 28px;border-radius:16px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#8e6fd8,#c39bff);
+    color:#fff;box-shadow:0 10px 22px rgba(142,111,216,.42);
+    transition:.2s;
+  }
+  .primary:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+  .primary:not(:disabled){animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  .ghost{
+    font:inherit;font-size:15px;font-weight:700;padding:11px 18px;border-radius:14px;
+    border:2px solid #ddd0ff;background:#fff;color:#6a4fa0;cursor:pointer;transition:.2s;
+  }
+  .ghost:hover{background:#f6f0ff}
+
+  .translation{
+    margin-top:16px;padding:14px 18px;border-radius:16px;
+    background:#f7f3ff;color:#5c4a80;font-size:16px;line-height:1.75;
+    border-left:4px solid #c9b6ff;
+    animation:cardIn .35s ease;
+  }
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="stars"></div>
+<div id="meadow">
+  <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
+    <path fill="rgba(130,205,160,.35)" d="M0,150 C240,80 430,215 720,175 C1010,135 1210,215 1440,150 L1440,320 L0,320 Z"/>
+    <path fill="rgba(95,185,135,.45)" d="M0,215 C300,155 610,255 900,215 C1150,185 1310,245 1440,215 L1440,320 L0,320 Z"/>
+  </svg>
+</div>
+<div id="flowers"></div>
+
+<div id="hud">
+  <div class="brand">🧚‍♀️ Mia and the Magic Garden</div>
+  <div class="progress"><div id="bar"></div></div>
+  <button id="soundBtn" title="Звук">🔊</button>
+</div>
+
+<main id="stage">
+  <section id="card" class="card">
+    <div id="scene" class="scene"></div>
+    <h1 id="title" class="title"></h1>
+    <p id="story" class="story"></p>
+    <div id="translation" class="translation hidden"></div>
+    <div class="card-foot">
+      <button id="trBtn" class="ghost">🇷🇺 Перевод</button>
+      <button id="nextBtn" class="primary" disabled>Дальше →</button>
+    </div>
+  </section>
+  <section id="final" class="card hidden"></section>
+</main>
+
+<script>
+/* =========================================================
+   ИСТОРИЯ
+   ========================================================= */
+const SLIDES = [
+  {
+    title: "1. The Secret Door · Таинственная дверь",
+    scene: "🌳🚪🧚‍♀️🧚‍♀️",
+    bg: "linear-gradient(180deg,#a8e0ff 0%,#d6f3ff 45%,#e9fff2 100%)",
+    stars: 0,
+    text: `Mia was in the garden {0} her house. It was a sunny day. She saw a small door {1} an old oak tree. Mia opened the door and went in. Two little {2} (fairy) were sitting at a table. «Don't be afraid!» they said. «There are many {3} (child) in our magic garden.»`,
+    blanks: [
+      {type:'choice', opts:['near','on','under'], a:'near'},
+      {type:'choice', opts:['in','on','under'], a:'under'},
+      {type:'input', a:'fairies'},
+      {type:'input', a:'children'}
+    ],
+    ru: "Мия была в саду рядом со своим домом. Был солнечный день. Она увидела маленькую дверь под старым дубом. Мия открыла дверь и вошла. Две маленькие феи сидели за столом. «Не бойся!» — сказали они. «В нашем волшебном саду много детей.»"
+  },
+  {
+    title: "2. The Magic Hall · Волшебный зал",
+    scene: "🏰✨🎁🧸",
+    bg: "linear-gradient(180deg,#c3b6f5 0%,#e2d9ff 50%,#f8f0ff 100%)",
+    stars: 0.15,
+    text: `The fairies took Mia to a big hall. There were many {0} (box) on the floor. «How many boxes?» asked Mia. «{1} (12)!» said the fairy. Mia opened one box. There were {2} (11) dolls and {3} (13) cars in it. A little red key was {4} the box.`,
+    blanks: [
+      {type:'choice', opts:['boxs','boxes','box'], a:'boxes'},
+      {type:'input', a:'twelve'},
+      {type:'input', a:'eleven'},
+      {type:'choice', opts:['thirteen','threeteen','thirty'], a:'thirteen'},
+      {type:'choice', opts:['in','on','under'], a:'in'}
+    ],
+    ru: "Феи привели Мию в большой зал. На полу было много коробок. «Сколько коробок?» — спросила Мия. «Двенадцать!» — сказала фея. Мия открыла одну коробку. В ней было одиннадцать кукол и тринадцать машинок. Маленький красный ключик был в коробке."
+  },
+  {
+    title: "3. The Fairy Queen · Королева фей",
+    scene: "👑🧚‍♀️🗝️🌷",
+    bg: "linear-gradient(180deg,#b8a8ef 0%,#d9ccff 50%,#f3e9ff 100%)",
+    stars: 0.2,
+    text: `A beautiful Queen came into the hall. Two {0} (lady) and ten {1} (man) stood near her. «I have {2} (20) magic keys,» said the Queen. «And five {3} (woman) look after my garden.»`,
+    blanks: [
+      {type:'input', a:'ladies'},
+      {type:'input', a:'men'},
+      {type:'choice', opts:['twenty','twenti','twentee'], a:'twenty'},
+      {type:'choice', opts:['womans','women','womens'], a:'women'}
+    ],
+    ru: "В зал вошла прекрасная Королева. Две дамы и десять мужчин стояли рядом с ней. «У меня двадцать волшебных ключей», — сказала Королева. «А пять женщин присматривают за моим садом.»"
+  },
+  {
+    title: "4. The Fairy School · Волшебная школа",
+    scene: "🎨🎵🕊️🌸",
+    bg: "linear-gradient(180deg,#ffd9a8 0%,#ffeccc 50%,#fff7e6 100%)",
+    stars: 0.1,
+    text: `In the morning the Queen {0} (teach) Mia to fly. She was a very good teacher! The children {1} (sing) a magic song. Mia {2} (draw) a picture of the garden. There were {3} (15) flowers on it.`,
+    blanks: [
+      {type:'choice', opts:['teach','taught','teached'], a:'taught'},
+      {type:'choice', opts:['sing','sang','singed'], a:'sang'},
+      {type:'choice', opts:['draw','drew','drawed'], a:'drew'},
+      {type:'input', a:'fifteen'}
+    ],
+    ru: "Утром Королева учила Мию летать. Она была очень хорошей учительницей! Дети спели волшебную песню. Мия нарисовала картинку сада. На ней было пятнадцать цветов."
+  },
+  {
+    title: "5. The Flight · Полёт",
+    scene: "🦋☁️⚽👧",
+    bg: "linear-gradient(180deg,#9fd8ff 0%,#c9ecff 50%,#eafaff 100%)",
+    stars: 0,
+    text: `The next day Mia {0} (ride) a big dragonfly. «I {1} (can) see the whole garden!» she shouted. She {2} (see) seven {3} (boy) and three {4} (girl) near the river. They were playing football.`,
+    blanks: [
+      {type:'choice', opts:['ride','rode','rided'], a:'rode'},
+      {type:'choice', opts:['can','could','caned'], a:'could'},
+      {type:'choice', opts:['see','saw','seed'], a:'saw'},
+      {type:'input', a:'boys'},
+      {type:'input', a:'girls'}
+    ],
+    ru: "На следующий день Мия каталась на большой стрекозе. «Я вижу весь сад!» — закричала она. Она увидела семь мальчиков и трёх девочек у реки. Они играли в футбол."
+  },
+  {
+    title: "6. The Magic Market · Волшебный рынок",
+    scene: "🍎⭐🐉🎂",
+    bg: "linear-gradient(180deg,#ffb08a 0%,#ffd6b0 45%,#ffeede 100%)",
+    stars: 0.25,
+    text: `Near the river there was a magic market. Mia {0} (read) the signs on the shops. A magic apple was {1} (14) coins. A star was {2} (30) coins. A little dragon was {3} (40) coins. A big cake was {4} (50) coins. «And this candy is {5} (60) coins!» said the seller.`,
+    blanks: [
+      {type:'choice', opts:['read','readed','reads'], a:'read'},
+      {type:'choice', opts:['fourteen','forteen','fourten'], a:'fourteen'},
+      {type:'input', a:'thirty'},
+      {type:'choice', opts:['fourty','forty','forti'], a:'forty'},
+      {type:'input', a:'fifty'},
+      {type:'input', a:'sixty'}
+    ],
+    ru: "У реки был волшебный рынок. Мия прочитала вывески на магазинах. Волшебное яблоко стоило четырнадцать монет. Звезда — тридцать монет. Маленький дракон — сорок монет. Большой торт — пятьдесят монет. «А эта конфета — шестьдесят монет!» — сказал продавец."
+  },
+  {
+    title: "7. The Lost Box · Пропавшая шкатулка",
+    scene: "🕯️📦🔍📚",
+    bg: "linear-gradient(180deg,#8f7bd6 0%,#b8a8ea 45%,#e2d9ff 100%)",
+    stars: 0.55,
+    text: `Oh no! The Queen's magic {0} (box) was lost. Mia looked {1} the table. There were {2} (17) shelves, {3} (18) boxes and {4} (19) old books in the room. Mia looked {5} the top shelf and saw the box!`,
+    blanks: [
+      {type:'choice', opts:['box','boxes','boxs'], a:'box'},
+      {type:'choice', opts:['under','on','in'], a:'under'},
+      {type:'choice', opts:['seventeen','seventten','seventin'], a:'seventeen'},
+      {type:'input', a:'eighteen'},
+      {type:'input', a:'nineteen'},
+      {type:'choice', opts:['on','in','near'], a:'on'}
+    ],
+    ru: "О нет! Волшебная шкатулка Королевы потерялась. Мия посмотрела под столом. В комнате было семнадцать полок, восемнадцать коробок и девятнадцать старых книг. Мия посмотрела на верхнюю полку — и увидела шкатулку!"
+  },
+  {
+    title: "8. Home · Домой",
+    scene: "🌙✨🏠💫",
+    bg: "linear-gradient(180deg,#2b2450 0%,#4b3f7a 45%,#7a6bb0 100%)",
+    stars: 1,
+    text: `«You are a hero, Mia!» said the Queen. She gave Mia two magic {0} (box) and many {1} (toy) inside. Mia {2} (go) home. Now she {3} (can) speak with fairies every day. And when the moon is {4} the sky, Mia says: «Hello, my friends!»`,
+    blanks: [
+      {type:'input', a:'boxes'},
+      {type:'input', a:'toys'},
+      {type:'choice', opts:['go','went','goed'], a:'went'},
+      {type:'choice', opts:['can','could','cans'], a:'can'},
+      {type:'choice', opts:['in','on','under'], a:'in'}
+    ],
+    ru: "«Ты герой, Мия!» — сказала Королева. Она дала Мие две волшебные коробки, а внутри было много игрушек. Мия пошла домой. Теперь она умеет разговаривать с феями каждый день. И когда луна в небе, Мия говорит: «Привет, мои друзья!»"
+  }
+];
+
+/* =========================================================
+   ОТПРАВКА РЕЗУЛЬТАТА В GOOGLE FORMS
+   ========================================================= */
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScsr7Hl29roXcVcOi83SrIUStb3U8eqyj2PU8tQAjIFb6izCQ/viewform";
+
+function sendResult(name, correct, total, mistakes, time) {
+  const data = new URLSearchParams();
+  data.append("entry.1381672458", name);        // поле "Имя"
+  data.append("entry.1686545992", correct);     // поле "Правильных"
+  data.append("entry.1003227158", total);       // поле "Всего"
+  data.append("entry.1445414322", mistakes);    // поле "Ошибки"
+  data.append("entry.1324949148", time);        // поле "Время"
+
+  fetch(FORM_URL + "?" + data.toString(), {
+    method: "GET",
+    mode: "no-cors"
+  }).catch(() => { /* no-cors — ответ всё равно не виден */ });
+}
+
+/* =========================================================
+   ЭЛЕМЕНТЫ
+   ========================================================= */
+const bgEl        = document.getElementById('bg');
+const starsEl     = document.getElementById('stars');
+const flowersEl   = document.getElementById('flowers');
+const meadowEl    = document.getElementById('meadow');
+const cardEl      = document.getElementById('card');
+const sceneEl     = document.getElementById('scene');
+const titleEl     = document.getElementById('title');
+const storyEl     = document.getElementById('story');
+const transEl     = document.getElementById('translation');
+const trBtn       = document.getElementById('trBtn');
+const nextBtn     = document.getElementById('nextBtn');
+const barEl       = document.getElementById('bar');
+const finalEl     = document.getElementById('final');
+const soundBtn    = document.getElementById('soundBtn');
+
+let cur = 0;
+let solvedTotal = 0;
+const totalBlanks = SLIDES.reduce((s, x) => s + x.blanks.length, 0);
+let soundOn = true;
+let openPop = null;
+
+/* ---------- учёт ошибок и времени ---------- */
+const PLAYER_NAME = "Маша";           // ← при желании замените имя
+const mistakeSet = new Set();        // уникальные номера слайдов с ошибками
+const startTime = Date.now();
+let resultSent = false;
+
+function registerMistake(slideIdx) {
+  mistakeSet.add(slideIdx + 1);      // нумерация с 1
+}
+
+function formatTime(ms) {
+  const sec = Math.round(ms / 1000);
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m > 0) return `${m} мин ${s} сек`;
+  return `${s} сек`;
+}
+
+/* =========================================================
+   ЗВУКИ
+   ========================================================= */
+let actx = null;
+function beep(freq, dur, type = 'sine', vol = 0.06, delay = 0) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = actx.currentTime + delay;
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  } catch (e) {}
+}
+const goodSound = () => { beep(880, .12, 'sine', .07); beep(1320, .18, 'sine', .06, .1); };
+const badSound  = () => { beep(200, .2, 'square', .05); };
+const winSound  = () => {
+  [523, 659, 784, 1047].forEach((f, i) => beep(f, .22, 'sine', .07, i * .12));
+};
+
+/* =========================================================
+   ДЕКОРАЦИИ
+   ========================================================= */
+(function makeStars() {
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.6 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 78 + '%';
+    s.style.animationDelay = (Math.random() * 3).toFixed(2) + 's';
+    starsEl.appendChild(s);
+  }
+})();
+
+(function makeFlowers() {
+  const F = ['🌷','🌼','🌸','🌻','🌹','💐','🌺','🌼'];
+  for (let i = 0; i < 8; i++) {
+    const f = document.createElement('div');
+    f.className = 'flower';
+    f.textContent = F[i % F.length];
+    f.style.left = (4 + i * 12 + Math.random() * 5) + '%';
+    f.style.fontSize = (18 + Math.random() * 14) + 'px';
+    f.style.transitionDelay = (i * 0.06) + 's';
+    flowersEl.appendChild(f);
+  }
+})();
+
+/* =========================================================
+   ЛОГИКА ПРОПУСКОВ
+   ========================================================= */
+function buildText(text, blanks) {
+  const frag = document.createDocumentFragment();
+  text.split(/(\{\d+\})/g).forEach(part => {
+    const m = /^\{(\d+)\}$/.exec(part);
+    if (m) frag.appendChild(makeBlank(blanks[+m[1]]));
+    else if (part) frag.appendChild(document.createTextNode(part));
+  });
+  return frag;
+}
+
+function makeBlank(b) {
+  if (b.type === 'input') {
+    const wrap = document.createElement('span');
+    wrap.className = 'input-wrap';
+    const inp = document.createElement('input');
+    inp.className = 'blank-input';
+    inp.type = 'text';
+    inp.autocomplete = 'off';
+    inp.spellcheck = false;
+    inp.setAttribute('autocapitalize', 'off');
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); checkInput(inp, b); }
+    });
+    inp.addEventListener('blur', () => { if (inp.value.trim()) checkInput(inp, b); });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  const el = document.createElement('span');
+  el.className = 'blank';
+  el.textContent = '____';
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    if (el.classList.contains('ok')) return;
+    openPopover(el, b);
+  });
+  return el;
+}
+
+function checkInput(inp, b) {
+  if (inp.classList.contains('ok')) return;
+  const val = inp.value.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!val) return;
+
+  if (val === b.a.toLowerCase()) {
+    inp.classList.remove('bad');
+    inp.classList.add('ok');
+    inp.readOnly = true;
+    inp.blur();
+    solvedTotal++;
+    updateProgress();
+    goodSound();
+    checkSlideDone();
+  } else {
+    inp.classList.add('bad');
+    badSound();
+    registerMistake(cur);
+    setTimeout(() => inp.classList.remove('bad'), 500);
+  }
+}
+
+/* =========================================================
+   ПОПОВЕР: рендерится в body, position:fixed, всегда сверху
+   ========================================================= */
+function openPopover(anchor, b) {
+  closePopover();
+
+  const pop = document.createElement('div');
+  pop.className = 'pop';
+
+  b.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = opt;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (opt.toLowerCase() === b.a.toLowerCase()) {
+        anchor.textContent = opt;
+        anchor.classList.remove('bad');
+        anchor.classList.add('ok');
+        closePopover();
+        solvedTotal++;
+        updateProgress();
+        goodSound();
+        checkSlideDone();
+      } else {
+        btn.classList.add('wrong');
+        anchor.classList.add('bad');
+        badSound();
+        registerMistake(cur);
+        setTimeout(() => {
+          btn.classList.remove('wrong');
+          anchor.classList.remove('bad');
+        }, 500);
+      }
+    });
+    pop.appendChild(btn);
+  });
+
+  // сначала прячем за экран, чтобы измерить размеры
+  pop.style.left = '-9999px';
+  pop.style.top  = '-9999px';
+  document.body.appendChild(pop);
+  openPop = pop;
+
+  positionPopover(pop, anchor);
+
+  // если пользователь прокрутил/изменил размер — привязка «уплывает», закрываем
+  window.addEventListener('scroll', closePopover, { passive: true, once: true });
+  window.addEventListener('resize', closePopover, { once: true });
+}
+
+function positionPopover(pop, anchor) {
+  const margin = 8;
+  const r = anchor.getBoundingClientRect();
+  const pw = pop.offsetWidth;
+  const ph = pop.offsetHeight;
+
+  const half = pw / 2;
+  let left = r.left + r.width / 2;
+  left = Math.max(half + margin, Math.min(window.innerWidth - half - margin, left));
+
+  let top = r.bottom + margin;
+  if (top + ph > window.innerHeight - margin) {
+    const above = r.top - ph - margin;
+    if (above >= margin) top = above;
+    else top = Math.max(margin, window.innerHeight - ph - margin);
+  }
+
+  pop.style.left = left + 'px';
+  pop.style.top  = top + 'px';
+}
+
+function closePopover() {
+  if (openPop) { openPop.remove(); openPop = null; }
+}
+document.addEventListener('click', closePopover);
+
+/* =========================================================
+   ПРОГРЕСС И ПРОВЕРКА СЛАЙДА
+   ========================================================= */
+function updateProgress() {
+  barEl.style.width = (solvedTotal / totalBlanks * 100) + '%';
+}
+
+let slideRewarded = false;
+
+function checkSlideDone() {
+  const items = storyEl.querySelectorAll('.blank, .blank-input');
+  const done = Array.from(items).every(e => e.classList.contains('ok'));
+  if (done) {
+    nextBtn.disabled = false;
+    if (!slideRewarded) {
+      slideRewarded = true;
+      const flower = flowersEl.children[cur];
+      if (flower) flower.classList.add('show');
+      setTimeout(winSound, 150);
+    }
+  }
+}
+
+/* =========================================================
+   РЕНДЕР СЛАЙДА
+   ========================================================= */
+function renderSlide(i) {
+  closePopover();
+  const s = SLIDES[i];
+  slideRewarded = false;
+
+  bgEl.style.background = s.bg;
+  starsEl.style.opacity = s.stars;
+  meadowEl.style.opacity = (0.35 + 0.5 * (1 - s.stars)).toFixed(2);
+
+  sceneEl.textContent = s.scene;
+  titleEl.textContent = s.title;
+
+  storyEl.innerHTML = '';
+  storyEl.appendChild(buildText(s.text, s.blanks));
+
+  transEl.textContent = s.ru;
+  transEl.classList.add('hidden');
+  trBtn.textContent = '🇷🇺 Перевод';
+
+  nextBtn.disabled = true;
+  nextBtn.textContent = (i === SLIDES.length - 1) ? 'Финиш ✨' : 'Дальше →';
+
+  cardEl.classList.remove('hidden');
+  finalEl.classList.add('hidden');
+
+  cardEl.style.animation = 'none';
+  void cardEl.offsetWidth;
+  cardEl.style.animation = '';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   ФИНАЛ + отправка результата
+   ========================================================= */
+function showFinal() {
+  closePopover();
+  cardEl.classList.add('hidden');
+  finalEl.classList.remove('hidden');
+  bgEl.style.background = 'linear-gradient(180deg,#2b2450 0%,#4b3f7a 45%,#7a6bb0 100%)';
+  starsEl.style.opacity = 1;
+  meadowEl.style.opacity = 0.35;
+
+  const elapsed = formatTime(Date.now() - startTime);
+  const mistakesList = [...mistakeSet].sort((a,b) => a - b).join(", ");
+  const mistakesText = mistakesList || "нет";
+
+  finalEl.innerHTML = `
+    <div class="scene">🏆🧚‍♀️✨</div>
+    <h1 class="title">You did it! · Ты справилась!</h1>
+    <p class="story" style="text-align:center;line-height:1.9">
+      Mia is safe, the magic box is back, and the garden is full of light.<br>
+      Ты прошла всю историю и разгадала все пропуски —
+      <b>${totalBlanks} из ${totalBlanks}</b>! 🌟<br>
+      <span style="font-size:17px;color:#6a4fa0">Ты теперь знаешь: lady → ladies, man → men, box → boxes,
+      near / on / in / under, числа до 60 и вторую форму глаголов.</span>
+    </p>
+    <div class="card-foot" style="justify-content:center">
+      <button class="primary" id="againBtn">Играть снова 🔄</button>
+    </div>
+  `;
+
+  document.getElementById('againBtn').addEventListener('click', () => location.reload());
+  winSound();
+
+  if (!resultSent) {
+    resultSent = true;
+    sendResult(PLAYER_NAME, solvedTotal, totalBlanks, mistakesText, elapsed);
+  }
+}
+
+/* =========================================================
+   КНОПКИ
+   ========================================================= */
+nextBtn.addEventListener('click', () => {
+  if (cur < SLIDES.length - 1) {
+    cur++;
+    renderSlide(cur);
+  } else {
+    showFinal();
+  }
+});
+
+trBtn.addEventListener('click', () => {
+  const hidden = transEl.classList.toggle('hidden');
+  trBtn.textContent = hidden ? '🇷🇺 Перевод' : '🇷🇺 Скрыть перевод';
+});
+
+soundBtn.addEventListener('click', () => {
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+});
+
+/* =========================================================
+   СТАРТ
+   ========================================================= */
+updateProgress();
+renderSlide(0);
+</script>
+</body>
+</html>
